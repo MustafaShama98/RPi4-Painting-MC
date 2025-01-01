@@ -1,0 +1,6 @@
+os-sys
+jsonlib-python3
+opencv-python
+paho-mqtt
+asyncio
+certifi
