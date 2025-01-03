@@ -150,21 +150,20 @@ def capture_frame():
 
 #capture frame when using rpi camera module v2
 def capture_frame_rpi():
-    """Capture a frame from the Raspberry Pi Camera Module and return as base64."""
-    # Initialize Picamera2
     picam2 = Picamera2()
-    config = picam2.create_still_configuration()
+    config = picam2.create_still_configuration(main={"size": (320, 240)})  # Smaller resolution
     picam2.configure(config)
 
-    # Start the camera and capture a frame
     picam2.start()
     frame = picam2.capture_array()
     picam2.stop()
+    picam2.close()  # Ensure the camera is properly released
+
+    # Resize the frame
+    frame = cv2.resize(frame, (1920, 1080))  # Adjust to smaller size
 
     # Encode the frame as JPEG
     _, buffer = cv2.imencode(".jpg", frame)
-
-    # Return the frame as a base64 string
     return base64.b64encode(buffer).decode("utf-8")
 
 async def write_to_json_file_async(data):
@@ -208,7 +207,12 @@ def handle_frame_request(topic):
     """Handle frame requests."""
     global sys_id
     _, sys_id, _ = topic.split("/")
-    base64_image = capture_frame()
+    # Determine the operating system
+    if os.name == "posix":
+        base64_image = capture_frame_rpi()
+    else:
+        base64_image = capture_frame()
+    print(f"Payload size: {len(base64_image)} bytes")
     payload = {"frameData": base64_image, "timestamp": time.time()}
     response_topic = f"m5stack/{sys_id}/frame_response"
     mqtt_client.publish(response_topic, json.dumps(payload), qos=2)
@@ -319,6 +323,7 @@ def main():
     calculate_painting_viewing_distance()
     initialize_sys_id()  # Load sys_id from file
     mqtt_setup()
+    print(os.name)
     command_interface()
     
 
