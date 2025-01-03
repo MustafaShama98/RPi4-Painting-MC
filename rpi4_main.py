@@ -10,6 +10,9 @@ import cv2
 import paho.mqtt.client as mqtt
 import math
 import numpy as np
+from picamera2 import Picamera2
+import sys
+
 # Global variables
 mqtt_client = None
 sys_id = None
@@ -152,7 +155,7 @@ def capture_frame_rpi():
     from picamera2 import Picamera2
 
     picam2 = Picamera2()
-    config = picam2.create_still_configuration(main={"size": (320, 240)})  # Smaller resolution
+    config = picam2.create_still_configuration(main={"size": (1280, 720)})  # Smaller resolution
     picam2.configure(config)
 
     picam2.start()
@@ -279,6 +282,9 @@ def mqtt_setup():
 # Command Interface
 def command_interface():
     global sys_id, waiting_for_sys_id
+    if not sys.stdin.isatty():
+        print("Running in non-interactive mode. Skipping command interface.")
+        return
     commands = {
         "status": lambda: handle_status_request(),
         "reset": lambda: handle_reset(),

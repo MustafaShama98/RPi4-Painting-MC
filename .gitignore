@@ -1,6 +1,6 @@
 # Ignore all .txt files
 *.txt
-
+*.log
 # Ignore specific file
 config.json
 
