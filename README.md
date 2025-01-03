@@ -10,3 +10,6 @@ sudo apt install python3-certifi
  sudo apt install python3-paho-mqtt
 
 sudo apt install python3-opencv
+
+
+ps -aux | grep rpi4_main.py
