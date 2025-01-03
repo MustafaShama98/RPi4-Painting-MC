@@ -9,6 +9,8 @@ import certifi
 import cv2
 import paho.mqtt.client as mqtt
 import math
+import numpy as np
+from picamera2 import Picamera2
 # Global variables
 mqtt_client = None
 sys_id = None
@@ -131,7 +133,7 @@ def on_message(client, userdata, msg):
 def on_disconnect(client, userdata, rc):
     print("Disconnected from MQTT broker")
 
-# Utilities
+#capture frame when using windows for dev and testing
 def capture_frame():
     """Capture a frame from the default camera and return as base64."""
     cap = cv2.VideoCapture(0)
@@ -144,6 +146,25 @@ def capture_frame():
         raise RuntimeError("Failed to capture frame")
 
     _, buffer = cv2.imencode(".jpg", frame)
+    return base64.b64encode(buffer).decode("utf-8")
+
+#capture frame when using rpi camera module v2
+def capture_frame_rpi():
+    """Capture a frame from the Raspberry Pi Camera Module and return as base64."""
+    # Initialize Picamera2
+    picam2 = Picamera2()
+    config = picam2.create_still_configuration()
+    picam2.configure(config)
+
+    # Start the camera and capture a frame
+    picam2.start()
+    frame = picam2.capture_array()
+    picam2.stop()
+
+    # Encode the frame as JPEG
+    _, buffer = cv2.imencode(".jpg", frame)
+
+    # Return the frame as a base64 string
     return base64.b64encode(buffer).decode("utf-8")
 
 async def write_to_json_file_async(data):
