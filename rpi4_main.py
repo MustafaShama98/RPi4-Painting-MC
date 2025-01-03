@@ -10,7 +10,6 @@ import cv2
 import paho.mqtt.client as mqtt
 import math
 import numpy as np
-from picamera2 import Picamera2
 # Global variables
 mqtt_client = None
 sys_id = None
@@ -150,6 +149,8 @@ def capture_frame():
 
 #capture frame when using rpi camera module v2
 def capture_frame_rpi():
+    from picamera2 import Picamera2
+
     picam2 = Picamera2()
     config = picam2.create_still_configuration(main={"size": (320, 240)})  # Smaller resolution
     picam2.configure(config)
