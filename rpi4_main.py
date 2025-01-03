@@ -292,7 +292,7 @@ def mqtt_setup():
 
     mqtt_client.will_set(
         topic=f"m5stack/{sys_id}/active",
-        payload=json.dumps({"status": "Inactive"}),
+        payload=json.dumps({"status": False}),
         qos=2,
         retain=True
     )
