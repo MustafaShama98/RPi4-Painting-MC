@@ -11,6 +11,8 @@ import paho.mqtt.client as mqtt
 import math
 import numpy as np
 from picamera2 import Picamera2
+import sys
+
 # Global variables
 mqtt_client = None
 sys_id = None
@@ -278,6 +280,9 @@ def mqtt_setup():
 # Command Interface
 def command_interface():
     global sys_id, waiting_for_sys_id
+    if not sys.stdin.isatty():
+        print("Running in non-interactive mode. Skipping command interface.")
+        return
     commands = {
         "status": lambda: handle_status_request(),
         "reset": lambda: handle_reset(),

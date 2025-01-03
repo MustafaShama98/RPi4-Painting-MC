@@ -13,3 +13,4 @@ sudo apt install python3-opencv
 
 
 ps -aux | grep rpi4_main.py
+tail -f logfile.log
