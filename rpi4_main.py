@@ -12,12 +12,14 @@ import math
 import numpy as np
 from picamera2 import Picamera2
 import sys
+from sensor import get_distance_cm
 
 # Global variables
 mqtt_client = None
 sys_id = None
 waiting_for_sys_id = False
 file_name = "system_data.json"
+
 
 
 
@@ -98,6 +100,53 @@ def simulate_distance_sensor():
     except KeyboardInterrupt:
         print("Stopped distance sensor simulation.")
 
+def sensor_handle():
+    """Simulate or read distance sensor data and publish to MQTT."""
+    global sys_id
+    if not sys_id:
+        print("No system ID set. Cannot publish sensor data.")
+        return
+
+    optimal_distance = calculate_painting_viewing_distance()
+    in_range_flag = False  # Tracks whether a person is currently in range
+    print(f"The range is 0 to {optimal_distance} to detect.")
+
+    try:
+        while True:
+            # Read the real distance from the sensor
+            distance = get_distance_cm()
+
+            # Check if the person is within the range of 0 to optimal_distance
+            if 0 <= distance <= optimal_distance:
+                if not in_range_flag:  # Publish only if this is the first detection in range
+                    in_range_flag = True
+                    payload = {
+                        "status": "person_detected", 
+                        "distance": distance,
+                    }
+                    mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps(payload), qos=1)
+                    print(f"Person detected in range ({distance} cm). Published to MQTT.")
+                else:
+                    print(f"Person still in range ({distance} cm). No additional publish.")
+            else:
+                if in_range_flag:  # Publish only if the person was in range and is now out
+                    in_range_flag = False
+                    payload = {
+                        "status": "person_out_of_range",
+                        "distance": distance,
+               
+                        "device": "esp32"
+                    }
+                    mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps(payload), qos=1)
+                    print(f"Person out of range ({distance} cm). Published to MQTT.")
+                else:
+                    print(f"No person in range ({distance} cm). No additional publish.")
+
+            # Delay to prevent excessive readings
+            time.sleep(1.2)
+
+    except KeyboardInterrupt:
+        print("Stopped distance sensor simulation.")
 
 
 # MQTT Callbacks
@@ -289,7 +338,7 @@ def command_interface():
         "delete": lambda: handle_deletion(),
         "help": lambda: print("Available commands: status, reset, delete, set_id, sensor, exit"),
         "sensor": lambda: publish_sensor_data() if sys_id else print("No system ID set."),
-        "simulate": lambda: simulate_distance_sensor() if sys_id else print("No system ID set."),
+        "simulate": lambda: sensor_handle() if sys_id else print("No system ID set."),
         "set_id": lambda: set_system_id(),
         "exit": lambda: exit_simulation(),
     }

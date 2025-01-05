@@ -140,3 +140,9 @@ tmux attach -t myscript
 ```
 
 ---
+
+## **7. Installing via pip on linux**
+using --break-system-packages, for example:
+pip3 install adafruit-circuitpython-vl53l0x --break-system-packages
+pip3 install adafruit-blinka --break-system-packages
+
