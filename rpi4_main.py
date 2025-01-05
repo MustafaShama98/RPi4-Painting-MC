@@ -109,6 +109,8 @@ def sensor_handle():
 
     optimal_distance = calculate_painting_viewing_distance()
     in_range_flag = False  # Tracks whether a person is currently in range
+    start_time_in_range = None  # Tracks when the person first enters the range
+    first_trigger_done = False  # Tracks whether the 5-second wait has been completed for the session
     print(f"The range is 0 to {optimal_distance} to detect.")
 
     try:
@@ -118,27 +120,30 @@ def sensor_handle():
 
             # Check if the person is within the range of 0 to optimal_distance
             if 0 <= distance <= optimal_distance:
-                if not in_range_flag:  # Publish only if this is the first detection in range
+                if not in_range_flag:
+                    # Start tracking time when the person enters the range
                     in_range_flag = True
-                    payload = {
-                        "status": "person_detected", 
-                        "distance": distance,
-                    }
-                    mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps(payload), qos=1)
-                    print(f"Person detected in range ({distance} cm). Published to MQTT.")
+                    start_time_in_range = time.time()
+                    print(f"Person entered range at {distance} cm. Waiting for confirmation.")
                 else:
-                    print(f"Person still in range ({distance} cm). No additional publish.")
+                    if not first_trigger_done:
+                        # Check if the person has stayed in range for 5 seconds
+                        if time.time() - start_time_in_range >= 5:
+                            payload = {
+                                "status": "person_detected",
+                                "distance": distance,
+                            }
+                            mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps(payload), qos=1)
+                            print(f"Person confirmed in range ({distance} cm). Published to MQTT.")
+                            first_trigger_done = True  # Mark that the wait is done for this session
+                    else:
+                        print(f"Person still in range ({distance} cm). No additional wait required.")
             else:
-                if in_range_flag:  # Publish only if the person was in range and is now out
+                if in_range_flag:
+                    print(f"Person left range ({distance} cm). Resetting session state.")
                     in_range_flag = False
-                    payload = {
-                        "status": "person_out_of_range",
-                        "distance": distance,
-               
-                        "device": "esp32"
-                    }
-                    mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps(payload), qos=1)
-                    print(f"Person out of range ({distance} cm). Published to MQTT.")
+                    start_time_in_range = None
+                    first_trigger_done = False  # Reset for the next session
                 else:
                     print(f"No person in range ({distance} cm). No additional publish.")
 
