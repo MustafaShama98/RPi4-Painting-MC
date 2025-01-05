@@ -218,7 +218,7 @@ def capture_frame_rpi():
     from picamera2 import Picamera2
 
     picam2 = Picamera2()
-    config = picam2.create_still_configuration(main={"size": (1280, 720)})  # Smaller resolution
+    config = picam2.create_still_configuration(main={"format": "RGB888","size": picam2.sensor_resolution})  # Smaller resolution
     picam2.configure(config)
 
     picam2.start()
@@ -227,7 +227,7 @@ def capture_frame_rpi():
     picam2.close()  # Ensure the camera is properly released
 
     # Resize the frame
-    frame = cv2.resize(frame, (1920, 1080))  # Adjust to smaller size
+    frame = cv2.resize(frame, (1280, 720))  # Adjust to smaller size
 
     # Encode the frame as JPEG
     _, buffer = cv2.imencode(".jpg", frame)
