@@ -10,7 +10,7 @@ import cv2
 import paho.mqtt.client as mqtt
 import math
 import numpy as np
-from picamera2 import Picamera2
+# from picamera2 import Picamera2
 import sys
 from sensor import get_distance_cm
 
@@ -157,6 +157,11 @@ def on_connect(client, userdata, flags, rc):
         if not payload or not payload.get("sys_id"):
             client.subscribe("install", qos=2)
             print("Subscribed to /install topic")
+        else:
+            client.subscribe("status", qos=2)
+            print("Subscribed to /status topic")
+            handle_status_request()
+
     else:
         print(f"Connection failed with code {rc}")
 
@@ -182,7 +187,11 @@ def on_message(client, userdata, msg):
         print(f"Error processing message: {e}")
 
 def on_disconnect(client, userdata, rc):
-    print("Disconnected from MQTT broker")
+    print("Disconnected from MQTT broker with result code:", rc)
+    print("Unexpected disconnection. Publishing 'Inactive' status.")
+    client.publish(f"m5stack/{sys_id}/active", json.dumps({"status": False}), qos=1, retain=True)
+    print("published inactive status")
+
 
 #capture frame when using windows for dev and testing
 def capture_frame():
@@ -201,6 +210,8 @@ def capture_frame():
 
 #capture frame when using rpi camera module v2
 def capture_frame_rpi():
+    from picamera2 import Picamera2
+
     picam2 = Picamera2()
     config = picam2.create_still_configuration(main={"size": (1280, 720)})  # Smaller resolution
     picam2.configure(config)
@@ -241,7 +252,9 @@ def subscribe_to_sys_id_topics():
         mqtt_client.subscribe(f"m5stack/{sys_id}/delete", qos=2)
         mqtt_client.subscribe(f"m5stack/{sys_id}/get_frame", qos=2)
         mqtt_client.subscribe(f"m5stack/{sys_id}/height", qos=2)
-        print(f"Subscribed to delete, getframe, height")
+        mqtt_client.subscribe(f"status", qos=2)
+
+        print(f"Subscribed to delete, getframe, height, status")
 
 
 # Handlers
@@ -287,7 +300,13 @@ def handle_reset():
 
 def handle_status_request():
     print(f"System {'is active' if sys_id else 'is not installed'} with sys_id: {sys_id or 'N/A'}")
+    mqtt_client.publish(f"m5stack/{sys_id}/active", json.dumps({"status" : True}), qos=2)
+    print("sent status active")
 
+def publish_status_inactive():
+    print(f"System {'is active' if sys_id else 'is not installed'} with sys_id: {sys_id or 'N/A'}")
+    mqtt_client.publish(f"m5stack/{sys_id}/active", json.dumps({"status" : False}), qos=2)
+    print("sent status inactive")
 
 
 def initialize_sys_id():
@@ -311,6 +330,8 @@ def initialize_sys_id():
 def mqtt_setup():
     global mqtt_client
     print('MQTT setup!')
+        # Configure the LWT (Last Will and Testament)
+
     mqtt_client = mqtt.Client(client_id=f"esp32_{hex(int(time.time() * 1000))[2:]}", protocol=mqtt.MQTTv311)
     mqtt_client.username_pw_set("art", "art123")
     context = ssl.create_default_context(cafile=certifi.where())
@@ -318,6 +339,13 @@ def mqtt_setup():
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
     mqtt_client.on_disconnect = on_disconnect
+
+    mqtt_client.will_set(
+        topic=f"m5stack/{sys_id}/active",
+        payload=json.dumps({"status": False}),
+        qos=2,
+        retain=True
+    )
 
     mqtt_client.connect("j81f31b4.ala.eu-central-1.emqxsl.com", port=8883)
     mqtt_client.loop_start()
@@ -355,6 +383,7 @@ def command_interface():
 
     def exit_simulation():
         print("Exiting...")
+        mqtt_client.publish(f"m5stack/{sys_id}/active", json.dumps({"status": False}), qos=1, retain=True)
         mqtt_client.loop_stop()
         mqtt_client.disconnect()
         exit(0)
