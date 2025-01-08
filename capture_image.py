@@ -9,6 +9,6 @@ picam2.configure(config)
 picam2.start_preview(Preview.QTGL)
 picam2.start()
 
-time.sleep(100)
+time.sleep(200)
 
 picam2.stop()

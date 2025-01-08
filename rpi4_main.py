@@ -42,7 +42,7 @@ def calculate_painting_viewing_distance():
         print(type(width))
         diagonal = math.sqrt(width**2 + height**2)
         print(f"distance {diagonal * 1.5}")
-        return 1.5 * diagonal
+        return 1.6 * diagonal
     return None
 
 
@@ -100,6 +100,10 @@ def simulate_distance_sensor():
     except KeyboardInterrupt:
         print("Stopped distance sensor simulation.")
 
+import time
+import statistics
+from collections import deque
+
 def sensor_handle():
     """Simulate or read distance sensor data and publish to MQTT."""
     global sys_id
@@ -108,50 +112,74 @@ def sensor_handle():
         return
 
     optimal_distance = calculate_painting_viewing_distance()
-    in_range_flag = False  # Tracks whether a person is currently in range
-    start_time_in_range = None  # Tracks when the person first enters the range
-    first_trigger_done = False  # Tracks whether the 5-second wait has been completed for the session
     print(f"The range is 0 to {optimal_distance} to detect.")
+
+    # Rolling buffer for smoothing (median of last 5 readings)
+    distance_buffer = deque(maxlen=5)
+
+    # Hysteresis/counters
+    in_range_flag = False
+    consecutive_in_range = 0
+    consecutive_out_of_range = 0
+    REQUIRED_CONSECUTIVE = 3  # Number of consecutive stable readings needed
+
+    # Timing for 5-second confirm
+    start_time_in_range = None
+    first_trigger_done = False
 
     try:
         while True:
-            # Read the real distance from the sensor
             distance = get_distance_cm()
+            distance_buffer.append(distance)
 
-            # Check if the person is within the range of 0 to optimal_distance
-            if 0 <= distance <= optimal_distance:
-                if not in_range_flag:
-                    # Start tracking time when the person enters the range
+            # Only proceed if buffer is filled (for stable median)
+            if len(distance_buffer) == distance_buffer.maxlen:
+                smoothed_distance = statistics.median(distance_buffer)
+            else:
+                smoothed_distance = distance
+
+            if 0 <= smoothed_distance <= optimal_distance:
+                # Count in-range
+                consecutive_in_range += 1
+                consecutive_out_of_range = 0
+
+                # Switch to in-range if stable
+                if not in_range_flag and consecutive_in_range >= REQUIRED_CONSECUTIVE:
                     in_range_flag = True
                     start_time_in_range = time.time()
-                    print(f"Person entered range at {distance} cm. Waiting for confirmation.")
-                else:
-                    if not first_trigger_done:
-                        # Check if the person has stayed in range for 5 seconds
-                        if time.time() - start_time_in_range >= 5:
-                            payload = {
-                                "status": "person_detected",
-                                "distance": distance,
-                            }
-                            mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps(payload), qos=1)
-                            print(f"Person confirmed in range ({distance} cm). Published to MQTT.")
-                            first_trigger_done = True  # Mark that the wait is done for this session
-                    else:
-                        print(f"Person still in range ({distance} cm). No additional wait required.")
+                    first_trigger_done = False
+                    print(f"Person entered range. Distance ~{smoothed_distance} cm.")
+
+                # If in range and not triggered yet, check 5-second confirmation
+                if in_range_flag and not first_trigger_done:
+                    if time.time() - start_time_in_range >= 5:
+                        payload = {
+                            "status": "person_detected",
+                            "distance": smoothed_distance,
+                        }
+                        mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps({"status" : "in"}), qos=2)
+                        print(f"Person confirmed in range (~{smoothed_distance} cm). Published to MQTT.")
+                        first_trigger_done = True
+                elif in_range_flag and first_trigger_done:
+                    print(f"Person still in range (~{smoothed_distance} cm). No additional wait.")
             else:
-                if in_range_flag:
-                    print(f"Person left range ({distance} cm). Resetting session state.")
+                # Count out-of-range
+                consecutive_out_of_range += 1
+                consecutive_in_range = 0
+
+                # Switch to out-of-range if stable
+                if in_range_flag and consecutive_out_of_range >= REQUIRED_CONSECUTIVE:
+                    print(f"Person left range (~{smoothed_distance} cm). Resetting session state.")
+                    mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps({"status" : "left"}), qos=2)
                     in_range_flag = False
                     start_time_in_range = None
-                    first_trigger_done = False  # Reset for the next session
-                else:
-                    print(f"No person in range ({distance} cm). No additional publish.")
+                    first_trigger_done = False
 
-            # Delay to prevent excessive readings
             time.sleep(1.2)
 
     except KeyboardInterrupt:
         print("Stopped distance sensor simulation.")
+
 
 
 # MQTT Callbacks
