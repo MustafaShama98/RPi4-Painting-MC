@@ -256,7 +256,6 @@ def subscribe_to_sys_id_topics():
     if sys_id:
         mqtt_client.subscribe(f"m5stack/{sys_id}/delete", qos=2)
         mqtt_client.subscribe(f"m5stack/{sys_id}/get_frame", qos=2)
-        mqtt_client.subscribe(f"m5stack/{sys_id}/height", qos=2)
         mqtt_client.subscribe(f"status", qos=2)
 
         print(f"Subscribed to delete, getframe, height, status")
