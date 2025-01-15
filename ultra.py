@@ -20,22 +20,26 @@ def read_distance_ultrasonic():
         
         # Convert to distance
         distance = (data[0] << 8) | data[1]  # Combine high and low byte
-        return distance /100 # Convert mm to cm
+        return distance / 100  # Convert mm to cm
     except Exception as e:
         print(f"Error reading distance: {e}")
         return None
 
-try:
+def measure_distance():
     print("Starting distance measurement...")
     while True:
-        distance = read_distance()
+        distance = read_distance_ultrasonic()  # Calling the read_distance function
         if distance is not None:
-            dist = (distance * 2.5) + 1
-            return dist
-            print(f"Distance: {dist:.2f} cm")
+            dist = (distance * 2.5) + 1  # Calculate the distance based on the sensor's data
+            print(f"Distance: {dist:.2f} cm")  # Print the calculated distance
+            return dist  # Return the calculated distance if needed
         else:
             print("Failed to read distance")
         time.sleep(0.5)  # Delay before next measurement
 
+# Main loop
+try:
+    measured_distance = measure_distance()  # Call the function to start measuring
+    print(f"Final measured distance: {measured_distance:.2f} cm")  # Print the final distance if desired
 except KeyboardInterrupt:
     print("Measurement stopped")
