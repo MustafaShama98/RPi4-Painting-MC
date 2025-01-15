@@ -7,7 +7,7 @@ I2C_ADDRESS = 0x57  # Example address
 # Initialize I2C bus
 bus = smbus2.SMBus(1)
 
-def read_distance():
+def read_distance_ultrasonic():
     """Read distance from the ultrasonic sensor via I2C."""
     try:
         # Request measurement from the sensor
@@ -31,6 +31,7 @@ try:
         distance = read_distance()
         if distance is not None:
             dist = (distance * 2.5) + 1
+            return dist
             print(f"Distance: {dist:.2f} cm")
         else:
             print("Failed to read distance")

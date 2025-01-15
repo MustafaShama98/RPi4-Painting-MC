@@ -12,8 +12,8 @@ import math
 import numpy as np
 # from picamera2 import Picamera2
 import sys
-from sensor import get_distance_cm
-
+from sensor import get_distance_tof
+from ultra import read_distance_ultrasonic
 # Global variables
 mqtt_client = None
 sys_id = None
@@ -129,7 +129,7 @@ def sensor_handle():
 
     try:
         while True:
-            distance = get_distance_cm()
+            distance = read_distance_ultrasonic()
             distance_buffer.append(distance)
 
             # Only proceed if buffer is filled (for stable median)
