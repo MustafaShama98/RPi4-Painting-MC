@@ -12,7 +12,7 @@ import math
 import numpy as np
 # from picamera2 import Picamera2
 import sys
-from sensor import get_distance_tof
+#from sensor import get_distance_tof
 from ultra import read_distance_ultrasonic
 # Global variables
 mqtt_client = None
