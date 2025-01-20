@@ -10,6 +10,7 @@ import cv2
 import paho.mqtt.client as mqtt
 import math
 import numpy as np
+import socket
 # from picamera2 import Picamera2
 import sys
 #from sensor import get_distance_tof
@@ -22,6 +23,19 @@ script_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of 
 file_name = os.path.join(script_dir, "system_data.json")  # Build the absolute path
 
 
+def wait_for_network(timeout=30):
+    """Wait until the network is ready."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            socket.create_connection(("j81f31b4.ala.eu-central-1.emqxsl.com", 8883), timeout=5)
+            print("Network is ready!")
+            return True
+        except (socket.timeout, socket.gaierror):
+            print("Waiting for network...")
+            time.sleep(5)
+    print("Network not ready within timeout.")
+    return False
 
 
 def calculate_painting_viewing_distance():
@@ -373,28 +387,31 @@ def mqtt_setup():
     global mqtt_client
     print('MQTT setup!')
         # Configure the LWT (Last Will and Testament)
+    try:
+        mqtt_client = mqtt.Client(client_id=f"esp32_{hex(int(time.time() * 1000))[2:]}", protocol=mqtt.MQTTv311)
+        mqtt_client.username_pw_set("art", "art123")
+        print('certifi where:' , certifi.where())
+        context = ssl.create_default_context(cafile=certifi.where())
+        mqtt_client.tls_set_context(context=context)
+        mqtt_client.on_connect = on_connect
+        mqtt_client.on_message = on_message
+        mqtt_client.on_disconnect = on_disconnect
 
-    mqtt_client = mqtt.Client(client_id=f"esp32_{hex(int(time.time() * 1000))[2:]}", protocol=mqtt.MQTTv311)
-    mqtt_client.username_pw_set("art", "art123")
-    context = ssl.create_default_context(cafile=certifi.where())
-    mqtt_client.tls_set_context(context=context)
-    mqtt_client.on_connect = on_connect
-    mqtt_client.on_message = on_message
-    mqtt_client.on_disconnect = on_disconnect
+        mqtt_client.will_set(
+            topic=f"m5stack/{sys_id}/active",
+            payload=json.dumps({"status": False}),
+            qos=2,
+            retain=True
+        )
 
-    mqtt_client.will_set(
-        topic=f"m5stack/{sys_id}/active",
-        payload=json.dumps({"status": False}),
-        qos=2,
-        retain=True
-    )
+        mqtt_client.connect("j81f31b4.ala.eu-central-1.emqxsl.com", port=8883)
+        mqtt_client.loop_start()
 
-    mqtt_client.connect("j81f31b4.ala.eu-central-1.emqxsl.com", port=8883)
-    mqtt_client.loop_start()
-
-    # Subscribe to topics if sys_id is already set
-    if sys_id:
-        subscribe_to_sys_id_topics()
+        # Subscribe to topics if sys_id is already set
+        if sys_id:
+            subscribe_to_sys_id_topics()
+    except Exception as e:
+     print(f"MQTT connection failed: {e}")
 
 # Command Interface
 def command_interface():
@@ -447,7 +464,11 @@ def command_interface():
 def main():
     calculate_painting_viewing_distance()
     initialize_sys_id()  # Load sys_id from file
-    mqtt_setup()
+    if wait_for_network():
+        mqtt_setup()
+    else:
+        print("Network not ready. Exiting.")
+        return
     print(os.name)
     command_interface()
     
