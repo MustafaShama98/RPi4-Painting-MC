@@ -266,18 +266,25 @@ async def write_to_json_file_async(data):
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, lambda: json.dump(data, open(file_name, "w"), indent=4))
 
-async def read_from_json_file_async():
-    """Asynchronously read data from a JSON file."""
-    loop = asyncio.get_event_loop()
+def read_from_json_file():
+    """Read data from a JSON file synchronously."""
     try:
-        return await loop.run_in_executor(None, lambda: json.load(open(file_name, "r")))
+        with open(file_name, "r") as f:
+            return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return None
 
+
 def read_data():
     """Read data synchronously from JSON file."""
-    # file_name = os.path.join(os.getcwd(), "system_data.json")
-    return asyncio.run(read_from_json_file_async())
+    try:
+        data = asyncio.run(read_from_json_file())
+        print("Data read from file:", data)  # Add this line
+        return data
+    except Exception as e:
+        print(f"Error reading JSON file: {e}")
+        return None
+
 
 def subscribe_to_sys_id_topics():
     """Subscribe to topics for the current sys_id."""
@@ -346,7 +353,7 @@ def initialize_sys_id():
     global sys_id
     # file_name = os.path.join(os.getcwd(), file_name)
     try:
-        payload = asyncio.run(read_from_json_file_async())
+        payload = asyncio.run(read_from_json_file())
         if payload and "sys_id" in payload:
             sys_id = payload["sys_id"]
             print(f"Loaded sys_id from file: {sys_id}")
