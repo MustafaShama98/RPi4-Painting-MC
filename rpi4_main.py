@@ -390,7 +390,6 @@ def mqtt_setup():
     try:
         mqtt_client = mqtt.Client(client_id=f"esp32_{hex(int(time.time() * 1000))[2:]}", protocol=mqtt.MQTTv311)
         mqtt_client.username_pw_set("art", "art123")
-        print('certifi where:' , certifi.where())
         context = ssl.create_default_context(cafile=certifi.where())
         mqtt_client.tls_set_context(context=context)
         mqtt_client.on_connect = on_connect
@@ -404,8 +403,18 @@ def mqtt_setup():
             retain=True
         )
 
-        mqtt_client.connect("j81f31b4.ala.eu-central-1.emqxsl.com", port=8883)
-        mqtt_client.loop_start()
+        for attempt in range(5):  # Retry up to 5 times
+            try:
+                print(f"Attempt {attempt + 1}: Connecting to MQTT broker...")
+                mqtt_client.connect("j81f31b4.ala.eu-central-1.emqxsl.com", port=8883)
+                mqtt_client.loop_start()
+                print("MQTT connected successfully.")
+                break
+            except Exception as e:
+                print(f"MQTT connection attempt {attempt + 1} failed: {e}")
+                time.sleep(10)
+        else:
+            print("Failed to connect to MQTT broker after 5 attempts.")
 
         # Subscribe to topics if sys_id is already set
         if sys_id:
