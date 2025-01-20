@@ -407,7 +407,7 @@ def mqtt_setup():
             try:
                 print(f"Attempt {attempt + 1}: Connecting to MQTT broker...")
                 mqtt_client.connect("j81f31b4.ala.eu-central-1.emqxsl.com", port=8883)
-                mqtt_client.loop_forever()
+                mqtt_client.loop_start()
                 print("MQTT connected successfully.")
                 break
             except Exception as e:
@@ -483,15 +483,15 @@ def main():
     if sys.stdin.isatty():
         print("Running in interactive mode. Starting command interface...")
         command_interface()
-    # else:
-    #     print("Running in non-interactive mode. Keeping the script alive for MQTT...")
-    #     try:
-    #         while True:
-    #             time.sleep(1)  # Prevent CPU overuse
-    #     except KeyboardInterrupt:
-    #         print("Exiting...")
-    #         mqtt_client.loop_stop()
-    #         mqtt_client.disconnect()
+    else:
+        print("Running in non-interactive mode. Keeping the script alive for MQTT...")
+        try:
+            while True:
+                time.sleep(1)  # Prevent CPU overuse
+        except KeyboardInterrupt:
+            print("Exiting...")
+            mqtt_client.loop_stop()
+            mqtt_client.disconnect()
     
 
 if __name__ == "__main__":
