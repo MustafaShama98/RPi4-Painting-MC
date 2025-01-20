@@ -355,7 +355,7 @@ def initialize_sys_id():
     global sys_id
     # file_name = os.path.join(os.getcwd(), file_name)
     try:
-        payload = asyncio.run(read_from_json_file())
+        payload = read_from_json_file()
         if payload and "sys_id" in payload:
             sys_id = payload["sys_id"]
             print(f"Loaded sys_id from file: {sys_id}")
