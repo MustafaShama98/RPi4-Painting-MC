@@ -13,6 +13,7 @@ import numpy as np
 import socket
 # from picamera2 import Picamera2
 import sys
+import signal
 #from sensor import get_distance_tof
 from ultra import read_distance_ultrasonic
 # Global variables
@@ -21,6 +22,23 @@ sys_id = None
 waiting_for_sys_id = False
 script_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the script
 file_name = os.path.join(script_dir, "system_data.json")  # Build the absolute path
+
+
+
+
+
+def handle_exit(signum, frame):
+    """Handle system shutdown or script termination."""
+    global mqtt_client, sys_id
+    print("Caught termination signal. Sending inactive MQTT message...")
+    if mqtt_client and sys_id:
+        mqtt_client.publish(f"m5stack/{sys_id}/active", json.dumps({"status": False}), qos=1, retain=True)
+        mqtt_client.loop_stop()
+        mqtt_client.disconnect()
+    print("Cleanup complete. Exiting...")
+    sys.exit(0)
+
+
 
 
 def wait_for_network(timeout=30):
@@ -475,6 +493,9 @@ def main():
     initialize_sys_id()  # Load sys_id from file
     if wait_for_network():
         mqtt_setup()
+        # Register signal handlers
+        signal.signal(signal.SIGTERM, handle_exit)  # Handle termination (e.g., `kill` or shutdown)
+        signal.signal(signal.SIGINT, handle_exit)   # Handle interrupt (e.g., Ctrl+C)
     else:
         print("Network not ready. Exiting.")
         return
