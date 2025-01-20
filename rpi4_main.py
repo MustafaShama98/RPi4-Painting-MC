@@ -171,7 +171,7 @@ def sensor_handle():
             else:
                 smoothed_distance = distance
 
-            if 0 <= smoothed_distance <= optimal_distance:
+            if 50 <= smoothed_distance <= optimal_distance:
                 # Count in-range
                 consecutive_in_range += 1
                 consecutive_out_of_range = 0
