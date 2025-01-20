@@ -18,7 +18,8 @@ from ultra import read_distance_ultrasonic
 mqtt_client = None
 sys_id = None
 waiting_for_sys_id = False
-file_name = "system_data.json"
+script_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the script
+file_name = os.path.join(script_dir, "system_data.json")  # Build the absolute path
 
 
 
