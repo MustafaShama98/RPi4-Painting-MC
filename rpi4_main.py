@@ -278,12 +278,14 @@ def read_from_json_file():
 def read_data():
     """Read data synchronously from JSON file."""
     try:
-        data = asyncio.run(read_from_json_file())
-        print("Data read from file:", data)  # Add this line
-        return data
-    except Exception as e:
+        with open(file_name, "r") as f:
+            data = json.load(f)
+            print("Data read from file:", data)  # Debugging
+            return data
+    except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"Error reading JSON file: {e}")
         return None
+
 
 
 def subscribe_to_sys_id_topics():
