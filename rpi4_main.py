@@ -41,6 +41,7 @@ def handle_exit(signum, frame):
     logging.info("Caught termination signal. Sending inactive MQTT message...")
     if mqtt_client and sys_id:
         mqtt_client.publish(f"m5stack/{sys_id}/active", json.dumps({"status": False}), qos=1, retain=True)
+        mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps({"status" : "left", "distance": "0"}), qos=2)
     if mqtt_client:
         mqtt_client.loop_stop()
         mqtt_client.disconnect()
