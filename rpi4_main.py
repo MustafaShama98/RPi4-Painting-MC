@@ -123,7 +123,7 @@ def sensor_handle():
                 time.sleep(0.4)
                 continue
             distance_buffer.append(distance)
-            logging.info(distance)
+            # logging.info(distance)
             # Only proceed if buffer is filled (for stable median)
             if len(distance_buffer) == distance_buffer.maxlen:
                 smoothed_distance = statistics.median(distance_buffer)
