@@ -459,6 +459,7 @@ def main():
         logging.info("Network not ready. Exiting.")
         return
     logging.info(os.name)
+    time.sleep(5)
     # Check if running in interactive mode
     if sys.stdin.isatty():
         logging.info("Running in interactive mode. Starting command interface...")
