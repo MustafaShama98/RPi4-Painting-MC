@@ -64,7 +64,7 @@ def shutdown_system():
     except Exception as e:
         print(f"Error while trying to shutdown: {e}")
 
-def restart_program(service_name):
+def restart_program():
     """
     Restart a systemd service by stopping and starting it.
 
@@ -72,12 +72,12 @@ def restart_program(service_name):
         service_name (str): Name of the service to restart.
     """
     try:
-        os.system(f"sudo systemctl restart {service_name}")
-        print(f"{service_name} restarted successfully.")
+        os.system(f"sudo systemctl restart mqtt_script.service")
+        print(f"restarted successfully.")
     except Exception as e:
-        print(f"Failed to restart {service_name}: {e}")
+        print(f"Failed to restart : {e}")
 
-def stop_program(service_name):
+def stop_program():
     """
     Restart a systemd service by stopping and starting it.
 
@@ -85,10 +85,11 @@ def stop_program(service_name):
         service_name (str): Name of the service to restart.
     """
     try:
-        os.system(f"sudo systemctl stop {service_name}")
-        print(f"{service_name} stopped successfully.")
+        print("stopping programming")
+        os.system(f"sudo systemctl stop mqtt_script.service")
+        print(f" stopped successfully.")
     except Exception as e:
-        print(f"Failed to restart {service_name}: {e}")
+        print(f"Failed to restart : {e}")
 
 def wait_for_network(timeout=30):
     """Wait until the network is ready."""
