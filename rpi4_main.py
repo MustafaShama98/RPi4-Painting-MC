@@ -334,6 +334,9 @@ def subscribe_to_sys_id_topics():
         mqtt_client.subscribe(f"m5stack/{sys_id}/get_frame", qos=2)
         mqtt_client.subscribe(f"m5stack/{sys_id}/shutdown", qos=2)
         mqtt_client.subscribe(f"m5stack/{sys_id}/restart", qos=2)
+        mqtt_client.subscribe(f"m5stack/{sys_id}/stop", qos=2)
+        mqtt_client.subscribe(f"m5stack/{sys_id}/start", qos=2)
+
 
         mqtt_client.subscribe(f"status", qos=2)
 
