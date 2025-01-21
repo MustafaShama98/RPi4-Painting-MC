@@ -1,6 +1,7 @@
 import base64
 import numpy as np
 from picamera2 import Picamera2
+import cv2
 
 def capture_frame():
     """Capture a frame from the Raspberry Pi Camera Module and return as base64."""

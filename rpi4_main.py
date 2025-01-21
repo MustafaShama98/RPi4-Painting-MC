@@ -117,6 +117,10 @@ def sensor_handle():
     try:
         while True:
             distance = read_distance_ultrasonic()
+            if distance is None:
+                #print("Error reading distance. Skipping...")
+                time.sleep(0.4)
+                continue
             distance_buffer.append(distance)
             logging.info(distance)
             # Only proceed if buffer is filled (for stable median)
@@ -125,7 +129,7 @@ def sensor_handle():
             else:
                 smoothed_distance = distance
 
-            if 50 <= smoothed_distance <= 155:
+            if smoothed_distance is not None and 50 <= smoothed_distance <= 155:
                 # Count in-range
                 consecutive_in_range += 1
                 consecutive_out_of_range = 0
