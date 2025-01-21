@@ -131,4 +131,4 @@ def sensor_handle():
 # Start the sensor handler
 #while(1):
 #    print(read_distance_ultrasonic())
-sensor_handle()
+#sensor_handle()
