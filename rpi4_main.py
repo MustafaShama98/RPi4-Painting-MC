@@ -435,6 +435,9 @@ def command_interface():
         "sensor": lambda: publish_sensor_data() if sys_id else logging.info("No system ID set."),
         "simulate": lambda: sensor_handle() if sys_id else logging.info("No system ID set."),
         "set_id": lambda: set_system_id(),
+        "shutdown": lambda: shutdown_system(),
+        "reboot": lambda: reboot_system(),
+
         "exit": lambda: exit_simulation(),
     }
 
