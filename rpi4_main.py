@@ -167,7 +167,7 @@ def sensor_handle():
                     start_time_in_range = None
                     first_trigger_done = False
 
-            time.sleep(1.2)
+            time.sleep(1)
 
     except KeyboardInterrupt:
         logging.info("Stopped distance sensor simulation.")
@@ -468,6 +468,7 @@ def main():
         try:
             while True:
                 time.sleep(1)  # Prevent CPU overuse
+                sensor_handle()
         except KeyboardInterrupt:
             logging.info("Exiting...")
             mqtt_client.loop_stop()
