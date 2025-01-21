@@ -48,7 +48,21 @@ def handle_exit(signum, frame):
     logging.info("Cleanup complete. Exiting...")
     sys.exit(0)
 
+def reboot_system():
+    """Reboot the Linux system."""
+    try:
+        print("Rebooting the system...")
+        os.system("sudo reboot")
+    except Exception as e:
+        print(f"Error while trying to reboot: {e}")
 
+def shutdown_system():
+    """Shutdown the Linux system."""
+    try:
+        print("Shutting down the system...")
+        os.system("sudo shutdown now -h")
+    except Exception as e:
+        print(f"Error while trying to shutdown: {e}")
 
 
 
@@ -207,6 +221,10 @@ def on_message(client, userdata, msg):
             handle_status_request()
         elif "install" in msg.topic:
             handle_installation(payload)
+        elif "shutdown" in msg.topic:
+            shutdown_system()
+        elif "restart" in msg.topic:
+            reboot_system()
         else:
             logging.info(f"Unhandled topic: {msg.topic}")
     except Exception as e:
@@ -286,6 +304,9 @@ def subscribe_to_sys_id_topics():
     if sys_id:
         mqtt_client.subscribe(f"m5stack/{sys_id}/delete", qos=2)
         mqtt_client.subscribe(f"m5stack/{sys_id}/get_frame", qos=2)
+        mqtt_client.subscribe(f"m5stack/{sys_id}/shutdown", qos=2)
+        mqtt_client.subscribe(f"m5stack/{sys_id}/restart", qos=2)
+
         mqtt_client.subscribe(f"status", qos=2)
 
         logging.info(f"Subscribed to delete, getframe, height, status")
