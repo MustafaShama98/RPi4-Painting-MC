@@ -149,7 +149,7 @@ def sensor_handle():
                             "status": "person_detected",
                             "distance": smoothed_distance,
                         }
-                        mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps({"status" : "in"}), qos=2)
+                        mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps({"status" : "in", "distance": smoothed_distance}), qos=2)
                         logging.info(f"Person confirmed in range (~{smoothed_distance} cm). Published to MQTT.")
                         first_trigger_done = True
                 elif in_range_flag and first_trigger_done:
@@ -162,7 +162,7 @@ def sensor_handle():
                 # Switch to out-of-range if stable
                 if in_range_flag and consecutive_out_of_range >= REQUIRED_CONSECUTIVE:
                     logging.info(f"Person left range (~{smoothed_distance} cm). Resetting session state.")
-                    mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps({"status" : "left"}), qos=2)
+                    mqtt_client.publish(f"m5stack/{sys_id}/sensor", json.dumps({"status" : "left", "distance": smoothed_distance}), qos=2)
                     in_range_flag = False
                     start_time_in_range = None
                     first_trigger_done = False
