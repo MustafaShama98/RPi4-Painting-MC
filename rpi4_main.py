@@ -37,15 +37,16 @@ logging.basicConfig(
 )
 
 def handle_exit(signum, frame):
-    """Handle system shutdown or script termination."""
     global mqtt_client, sys_id
     logging.info("Caught termination signal. Sending inactive MQTT message...")
     if mqtt_client and sys_id:
         mqtt_client.publish(f"m5stack/{sys_id}/active", json.dumps({"status": False}), qos=1, retain=True)
+    if mqtt_client:
         mqtt_client.loop_stop()
         mqtt_client.disconnect()
     logging.info("Cleanup complete. Exiting...")
     sys.exit(0)
+
 
 
 
@@ -211,7 +212,7 @@ def on_message(client, userdata, msg):
         logging.info(f"Error processing message: {e}")
 
 def on_disconnect(client, userdata, rc):
-    logging.info("Disconnected from MQTT broker with result code:", rc)
+    logging.info(f"Disconnected from MQTT broker with result code: {rc}")
     logging.info("Unexpected disconnection. Publishing 'Inactive' status.")
     client.publish(f"m5stack/{sys_id}/active", json.dumps({"status": False}), qos=1, retain=True)
     logging.info("published inactive status")
@@ -271,7 +272,7 @@ def read_data():
     try:
         with open(file_name, "r") as f:
             data = json.load(f)
-            logging.info("Data read from file:", data)  # Debugging
+            logging.info(f"Data read from file: {data}")
             return data
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logging.info(f"Error reading JSON file: {e}")
