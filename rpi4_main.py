@@ -64,7 +64,31 @@ def shutdown_system():
     except Exception as e:
         print(f"Error while trying to shutdown: {e}")
 
+def restart_program(service_name):
+    """
+    Restart a systemd service by stopping and starting it.
 
+    Parameters:
+        service_name (str): Name of the service to restart.
+    """
+    try:
+        os.system(f"sudo systemctl restart {service_name}")
+        print(f"{service_name} restarted successfully.")
+    except Exception as e:
+        print(f"Failed to restart {service_name}: {e}")
+
+def stop_program(service_name):
+    """
+    Restart a systemd service by stopping and starting it.
+
+    Parameters:
+        service_name (str): Name of the service to restart.
+    """
+    try:
+        os.system(f"sudo systemctl stop {service_name}")
+        print(f"{service_name} stopped successfully.")
+    except Exception as e:
+        print(f"Failed to restart {service_name}: {e}")
 
 def wait_for_network(timeout=30):
     """Wait until the network is ready."""
@@ -225,6 +249,10 @@ def on_message(client, userdata, msg):
             shutdown_system()
         elif "restart" in msg.topic:
             reboot_system()
+        elif "start" in msg.topic:
+            restart_program()
+        elif "stop" in msg.topic:
+            stop_program()
         else:
             logging.info(f"Unhandled topic: {msg.topic}")
     except Exception as e:
