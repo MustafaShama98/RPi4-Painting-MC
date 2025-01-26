@@ -140,7 +140,7 @@ def sensor_handle():
         return
 
     optimal_distance = calculate_painting_viewing_distance()
-    logging.info(f"The range is 50 to {optimal_distance} to detect.")
+    logging.info(f"The range is 40 to {optimal_distance} to detect.")
 
     # Rolling buffer for smoothing (median of last 5 readings)
     distance_buffer = deque(maxlen=5)
@@ -170,7 +170,7 @@ def sensor_handle():
             else:
                 smoothed_distance = distance
 
-            if smoothed_distance is not None and 50 <= smoothed_distance <= 155:
+            if smoothed_distance is not None and 40 <= smoothed_distance <= 155:
                 # Count in-range
                 consecutive_in_range += 1
                 consecutive_out_of_range = 0
